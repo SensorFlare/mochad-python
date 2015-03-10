@@ -2,16 +2,40 @@
 __author__ = 'amaxilatis'
 
 # required for logging
-import logging
 # required for rabbitmq connections
 import pika
 # required for mochad communication
-import hautomation_x10.cmds as mochad
-
 from properties import *
 
+import socket
 
-logging.basicConfig()
+
+def netcat(hostname, port, content):
+    try:
+        print content
+        print " [n] Trying connection to: %s:%s" % (hostname, port)
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        s.connect((hostname, port))
+
+        print " [n] Connected to: %s:%s" % (hostname, port)
+        s.sendall(b"%s\n" % content)
+        print " [n] sent: %s" % content
+        s.shutdown(socket.SHUT_WR)
+        buff = ""
+
+        while True:
+            data = s.recv(1024)
+            if data == "":
+                break
+            buff = "%s%s" % (buff, data)
+        print " [n] Received: %s" % repr(buff)
+        s.close()
+        print " [n] Connection closed."
+        return repr(buff)
+    except Exception as ex:
+        print " [n] ERROR: %s" % ex
+        raise ex
+
 
 # create the rabbitmq exchange and queue names to communicate with sensorflare
 send_exchange = "mochad-" + username + "-send"
@@ -46,21 +70,10 @@ def create_connection(host, credentials):
             print ' [x] error sending back message'
 
     def callback(ch, method, properties, body):
-        print " [x] %r %r %r %r" % (body, ch, method, properties)
-        body_parts = body.split(" ")
-        if len(body_parts) == 3:
-            target = body_parts[1]
-            command = body_parts[2]
-            mochad.pl_switch(target, command)
-            print ' [x] switch command sent'
-            rabbitSend('sent: ' + body + '\n')
-
-        if len(body_parts) == 4:
-            target = body_parts[1]
-            command = body_parts[3]
-            mochad.pl_dim(target, command)
-            print ' [x] dim command sent'
-            rabbitSend('sent: ' + body + '\n')
+        response = netcat("192.168.1.10", 1099, body)
+        print ' [c] sent:' + body
+        print ' [c] response:' + response
+        rabbitSend(response[1:-1].replace('\\n', '\n'))
 
     # set the consume callback
     channel.basic_consume(callback, queue=commands_queue, no_ack=True)
