@@ -70,7 +70,7 @@ def create_connection(host, credentials):
             print ' [x] error sending back message'
 
     def callback(ch, method, properties, body):
-        response = netcat("192.168.1.10", 1099, body)
+        response = netcat("localhost", 1099, body)
         print ' [c] sent:' + body
         print ' [c] response:' + response
         rabbitSend(response[1:-1].replace('\\n', '\n'))
