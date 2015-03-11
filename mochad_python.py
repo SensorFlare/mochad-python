@@ -8,6 +8,9 @@ import pika
 from properties import *
 
 import socket
+import logging
+
+logging.basicConfig()
 
 
 def netcat(hostname, port, content):
