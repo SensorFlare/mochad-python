@@ -64,7 +64,7 @@ def create_connection(host, credentials):
     channel = connection.channel()
     logging.info(" [x] connected to 'mochad.sensorflare.com'")
     # declare the commands exchange if missing
-    channel.exchange_declare(exchange=commands_exchange, type='topic', durable=True, internal=False, auto_delete=False)
+    channel.exchange_declare(exchange=commands_exchange, type='topic', durable=True, internal=False, auto_delete=False,passive=True)
     # bind our queue to the exchange
     channel.queue_bind(exchange=commands_exchange, queue=commands_queue)
 
